@@ -1,8 +1,24 @@
-﻿import { ArrowUpRight, BadgeCheck, Heart, Video } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Heart, Scale, Video } from "lucide-react";
 import type { Property } from "@/data/site";
 import { IconButton, PremiumButton } from "./PremiumButton";
 
-export function PropertyCard({ property }: { property: Property }) {
+type PropertyCardProps = {
+  property: Property;
+  isFavorite?: boolean;
+  isCompared?: boolean;
+  onToggleFavorite?: () => void;
+  onToggleCompare?: () => void;
+  onRequestVideo?: () => void;
+};
+
+export function PropertyCard({
+  property,
+  isFavorite = false,
+  isCompared = false,
+  onToggleFavorite,
+  onToggleCompare,
+  onRequestVideo
+}: PropertyCardProps) {
   return (
     <article className="lift-card overflow-hidden rounded-lg border border-black/10 bg-white shadow-lift">
       <div className="relative h-64">
@@ -13,8 +29,9 @@ export function PropertyCard({ property }: { property: Property }) {
           <span className="rounded-md bg-night/70 px-3 py-1 text-xs font-bold text-white backdrop-blur">{property.district}</span>
         </div>
         <div className="absolute right-4 top-4 flex gap-2">
-          <IconButton icon={Video} label="Demander une visite video" variant="light" />
-          <IconButton icon={Heart} label="Ajouter aux favoris" variant="favorite" />
+          <IconButton icon={Video} label="Demander une visite video" variant="light" onClick={onRequestVideo} />
+          <IconButton icon={Scale} label={isCompared ? "Retirer du comparateur" : "Ajouter au comparateur"} variant="light" active={isCompared} onClick={onToggleCompare} />
+          <IconButton icon={Heart} label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"} variant="favorite" active={isFavorite} onClick={onToggleFavorite} />
         </div>
       </div>
       <div className="p-5">
@@ -46,4 +63,3 @@ export function PropertyCard({ property }: { property: Property }) {
     </article>
   );
 }
-

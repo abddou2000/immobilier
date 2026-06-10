@@ -65,6 +65,8 @@ type IconButtonProps = {
   href?: string;
   variant?: "light" | "glass" | "favorite";
   className?: string;
+  active?: boolean;
+  onClick?: () => void;
 };
 
 const iconVariantClasses = {
@@ -73,8 +75,8 @@ const iconVariantClasses = {
   favorite: "icon-action-light icon-action-favorite"
 };
 
-export function IconButton({ icon: Icon, label, href, variant = "light", className = "" }: IconButtonProps) {
-  const classNames = `icon-action ${iconVariantClasses[variant]} ${className}`;
+export function IconButton({ icon: Icon, label, href, variant = "light", className = "", active = false, onClick }: IconButtonProps) {
+  const classNames = `icon-action ${iconVariantClasses[variant]} ${active ? "is-active" : ""} ${className}`;
 
   if (href) {
     return (
@@ -85,7 +87,7 @@ export function IconButton({ icon: Icon, label, href, variant = "light", classNa
   }
 
   return (
-    <button type="button" aria-label={label} title={label} className={classNames}>
+    <button type="button" aria-label={label} title={label} className={classNames} aria-pressed={active} onClick={onClick}>
       <Icon size={18} />
     </button>
   );

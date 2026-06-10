@@ -286,6 +286,19 @@ body {
   transform: scale(.96);
 }
 
+.icon-action.is-active {
+  --icon-bg: #1e2422;
+  --icon-edge: #d8a14b;
+  border-color: rgba(216,161,75,.42);
+  box-shadow: 0 14px 30px rgba(30,36,34,.18);
+  color: #fff;
+}
+
+.icon-action.is-active::after {
+  opacity: 1;
+  width: 22px;
+}
+
 .icon-action-light {
   --icon-bg: rgba(255,255,255,.94);
   --icon-fg: #1e2422;

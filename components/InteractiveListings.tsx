@@ -5,17 +5,22 @@ import {
   ArrowUpDown,
   BadgeCheck,
   Grid2X2,
+  Heart,
   List,
   MapPin,
+  MessageCircle,
   RotateCcw,
+  Scale,
   Search,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Video,
-  Wallet
+  Wallet,
+  X
 } from "lucide-react";
 import type { Property, Transaction } from "@/data/site";
-import { PremiumButton } from "./PremiumButton";
+import { IconButton, PremiumButton } from "./PremiumButton";
 import { PropertyCard } from "./PropertyCard";
 
 type SortMode = "recent" | "price-asc" | "price-desc" | "surface-desc";
@@ -67,6 +72,11 @@ function budgetLabel(mode: Transaction, key: BudgetKey) {
   return "Premium";
 }
 
+function formatMad(value: number, mode: Transaction) {
+  const formatted = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(value);
+  return mode === "louer" ? `${formatted} MAD/mois` : `${formatted} MAD`;
+}
+
 export function InteractiveListings({ properties, mode, filters }: { properties: Property[]; mode: Transaction; filters: string[] }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("Tous");
@@ -75,9 +85,15 @@ export function InteractiveListings({ properties, mode, filters }: { properties:
   const [signals, setSignals] = useState<string[]>([]);
   const [sort, setSort] = useState<SortMode>("recent");
   const [view, setView] = useState<ViewMode>("grid");
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [videoRequestId, setVideoRequestId] = useState<string | null>(null);
 
   const districts = useMemo(() => ["Tous", ...Array.from(new Set(properties.map((property) => property.district)))], [properties]);
   const activeCount = [type !== "Tous", district !== "Tous", budget !== "all", signals.length > 0, query.trim().length > 0].filter(Boolean).length;
+  const favoriteProperties = useMemo(() => favoriteIds.map((id) => properties.find((property) => property.id === id)).filter((property): property is Property => Boolean(property)), [favoriteIds, properties]);
+  const comparedProperties = useMemo(() => compareIds.map((id) => properties.find((property) => property.id === id)).filter((property): property is Property => Boolean(property)), [compareIds, properties]);
+  const videoProperty = useMemo(() => properties.find((property) => property.id === videoRequestId), [properties, videoRequestId]);
 
   const filteredProperties = useMemo(() => {
     const normalizedQuery = normalize(query);
@@ -121,6 +137,17 @@ export function InteractiveListings({ properties, mode, filters }: { properties:
 
   const toggleSignal = (signal: string) => {
     setSignals((current) => current.includes(signal) ? current.filter((item) => item !== signal) : [...current, signal]);
+  };
+
+  const toggleFavorite = (propertyId: string) => {
+    setFavoriteIds((current) => (current.includes(propertyId) ? current.filter((id) => id !== propertyId) : [...current, propertyId]));
+  };
+
+  const toggleCompare = (propertyId: string) => {
+    setCompareIds((current) => {
+      if (current.includes(propertyId)) return current.filter((id) => id !== propertyId);
+      return [...current.slice(-2), propertyId];
+    });
   };
 
   return (
@@ -217,12 +244,38 @@ export function InteractiveListings({ properties, mode, filters }: { properties:
         </div>
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-4">
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-bold text-ink/56">
           {filteredProperties.length} bien{filteredProperties.length > 1 ? "s" : ""} trouve{filteredProperties.length > 1 ? "s" : ""}
         </p>
-        <p className="hidden text-sm text-ink/42 sm:block">Recherche instantanee, donnees statiques front</p>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          {favoriteIds.length > 0 ? (
+            <button type="button" onClick={() => setFavoriteIds([])} className="filter-pill is-active">
+              <Heart size={14} />
+              {favoriteIds.length} favori{favoriteIds.length > 1 ? "s" : ""}
+            </button>
+          ) : null}
+          {compareIds.length > 0 ? (
+            <button type="button" onClick={() => setCompareIds([])} className="filter-pill is-active">
+              <Scale size={14} />
+              {compareIds.length}/3 comparaison
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      {favoriteProperties.length > 0 || comparedProperties.length > 0 || videoProperty ? (
+        <SelectionDesk
+          favoriteCount={favoriteProperties.length}
+          comparedProperties={comparedProperties}
+          mode={mode}
+          videoProperty={videoProperty}
+          onRemoveCompare={(propertyId) => setCompareIds((current) => current.filter((id) => id !== propertyId))}
+          onClearFavorites={() => setFavoriteIds([])}
+          onClearCompare={() => setCompareIds([])}
+          onClearVideo={() => setVideoRequestId(null)}
+        />
+      ) : null}
 
       {filteredProperties.length === 0 ? (
         <div className="mt-6 rounded-lg border border-black/10 bg-white p-10 text-center shadow-lift">
@@ -241,14 +294,165 @@ export function InteractiveListings({ properties, mode, filters }: { properties:
         <div className={view === "grid" ? "mt-6 grid gap-6 md:grid-cols-2" : "mt-6 space-y-4"}>
           {filteredProperties.map((property) => (
             view === "grid" ? (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyCard
+                key={property.id}
+                property={property}
+                isFavorite={favoriteIds.includes(property.id)}
+                isCompared={compareIds.includes(property.id)}
+                onToggleFavorite={() => toggleFavorite(property.id)}
+                onToggleCompare={() => toggleCompare(property.id)}
+                onRequestVideo={() => setVideoRequestId(property.id)}
+              />
             ) : (
-              <CompactPropertyRow key={property.id} property={property} />
+              <CompactPropertyRow
+                key={property.id}
+                property={property}
+                isFavorite={favoriteIds.includes(property.id)}
+                isCompared={compareIds.includes(property.id)}
+                onToggleFavorite={() => toggleFavorite(property.id)}
+                onToggleCompare={() => toggleCompare(property.id)}
+                onRequestVideo={() => setVideoRequestId(property.id)}
+              />
             )
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+type SelectionDeskProps = {
+  favoriteCount: number;
+  comparedProperties: Property[];
+  mode: Transaction;
+  videoProperty?: Property;
+  onRemoveCompare: (propertyId: string) => void;
+  onClearFavorites: () => void;
+  onClearCompare: () => void;
+  onClearVideo: () => void;
+};
+
+function SelectionDesk({
+  favoriteCount,
+  comparedProperties,
+  mode,
+  videoProperty,
+  onRemoveCompare,
+  onClearFavorites,
+  onClearCompare,
+  onClearVideo
+}: SelectionDeskProps) {
+  const comparedCount = comparedProperties.length;
+  const averagePrice = comparedCount
+    ? Math.round(comparedProperties.reduce((total, property) => total + property.priceValue, 0) / comparedCount)
+    : 0;
+  const averageArea = comparedCount
+    ? Math.round(comparedProperties.reduce((total, property) => total + property.areaValue, 0) / comparedCount)
+    : 0;
+  const districts = comparedProperties.length ? Array.from(new Set(comparedProperties.map((property) => property.district))).join(", ") : "A definir";
+
+  return (
+    <section className="motion-border mt-5 overflow-hidden rounded-lg border border-black/10 bg-night text-white shadow-soft">
+      <div className="grid gap-5 p-5 lg:grid-cols-[.95fr_1.05fr]">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-saffron">
+            <Sparkles size={15} />
+            Selection client
+          </div>
+          <h3 className="mt-3 text-2xl font-extrabold">Tableau de decision instantane.</h3>
+          <p className="mt-2 text-sm leading-6 text-white/62">
+            Compare les meilleurs signaux avant d'appeler l'agence: budget, surface, quartier, favoris et visite video.
+          </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-md border border-white/10 bg-white/10 p-3">
+              <div className="text-xs font-bold uppercase tracking-wider text-white/42">Budget moyen</div>
+              <div className="mt-1 text-sm font-extrabold">{comparedCount ? formatMad(averagePrice, mode) : "A comparer"}</div>
+            </div>
+            <div className="rounded-md border border-white/10 bg-white/10 p-3">
+              <div className="text-xs font-bold uppercase tracking-wider text-white/42">Surface moyenne</div>
+              <div className="mt-1 text-sm font-extrabold">{comparedCount ? `${averageArea} m2` : "A comparer"}</div>
+            </div>
+            <div className="rounded-md border border-white/10 bg-white/10 p-3">
+              <div className="text-xs font-bold uppercase tracking-wider text-white/42">Quartiers</div>
+              <div className="mt-1 text-sm font-extrabold">{districts}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {favoriteCount > 0 ? (
+              <div className="rounded-md border border-white/10 bg-white/10 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sm font-extrabold">
+                    <Heart size={16} />
+                    {favoriteCount} favori{favoriteCount > 1 ? "s" : ""}
+                  </div>
+                  <button type="button" onClick={onClearFavorites} className="text-xs font-bold text-saffron">
+                    Vider
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {videoProperty ? (
+              <div className="rounded-md border border-white/10 bg-white/10 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-extrabold">
+                      <Video size={16} />
+                      Visite video
+                    </div>
+                    <p className="mt-1 text-xs text-white/58">{videoProperty.title}</p>
+                  </div>
+                  <button type="button" onClick={onClearVideo} aria-label="Retirer la demande video" className="text-white/58 transition hover:text-white">
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {comparedProperties.length > 0 ? (
+            <div className="rounded-md border border-white/10 bg-white/10 p-3">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-extrabold">
+                  <Scale size={16} />
+                  Comparateur {comparedProperties.length}/3
+                </div>
+                <button type="button" onClick={onClearCompare} className="text-xs font-bold text-saffron">
+                  Vider
+                </button>
+              </div>
+              <div className="space-y-2">
+                {comparedProperties.map((property) => (
+                  <div key={property.id} className="grid grid-cols-[54px_1fr_auto] items-center gap-3 rounded-md bg-black/20 p-2">
+                    <img src={property.image} alt={property.title} className="h-12 w-12 rounded-md object-cover" />
+                    <div>
+                      <div className="line-clamp-1 text-sm font-extrabold">{property.title}</div>
+                      <div className="text-xs text-white/48">{property.priceMad} - {property.area}</div>
+                    </div>
+                    <button type="button" onClick={() => onRemoveCompare(property.id)} aria-label={`Retirer ${property.title}`} className="text-white/52 transition hover:text-white">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3">
+            <PremiumButton href="/contact" variant="signature" icon={MessageCircle} compact>
+              Envoyer ma selection
+            </PremiumButton>
+            <PremiumButton href={comparedProperties[0] ? `/biens/${comparedProperties[0].id}` : "/contact"} variant="glass" compact>
+              Voir le meilleur signal
+            </PremiumButton>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -273,7 +477,23 @@ function SegmentedControlWrapper({ view, setView }: { view: ViewMode; setView: (
   );
 }
 
-function CompactPropertyRow({ property }: { property: Property }) {
+type CompactPropertyRowProps = {
+  property: Property;
+  isFavorite: boolean;
+  isCompared: boolean;
+  onToggleFavorite: () => void;
+  onToggleCompare: () => void;
+  onRequestVideo: () => void;
+};
+
+function CompactPropertyRow({
+  property,
+  isFavorite,
+  isCompared,
+  onToggleFavorite,
+  onToggleCompare,
+  onRequestVideo
+}: CompactPropertyRowProps) {
   return (
     <article className="lift-card grid gap-4 rounded-lg border border-black/10 bg-white p-4 shadow-lift sm:grid-cols-[180px_1fr_auto] sm:items-center">
       <img src={property.image} alt={property.title} className="h-40 w-full rounded-md object-cover sm:h-32" />
@@ -291,6 +511,11 @@ function CompactPropertyRow({ property }: { property: Property }) {
         </div>
       </div>
       <div className="sm:text-right">
+        <div className="mb-3 flex gap-2 sm:justify-end">
+          <IconButton icon={Video} label="Demander une visite video" onClick={onRequestVideo} />
+          <IconButton icon={Scale} label={isCompared ? "Retirer du comparateur" : "Ajouter au comparateur"} active={isCompared} onClick={onToggleCompare} />
+          <IconButton icon={Heart} label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"} variant="favorite" active={isFavorite} onClick={onToggleFavorite} />
+        </div>
         <div className="text-lg font-extrabold text-ink">{property.priceMad}</div>
         <div className="mb-4 text-xs text-ink/48">{property.priceEur}</div>
         <PremiumButton href={`/biens/${property.id}`} variant="ghost" compact>

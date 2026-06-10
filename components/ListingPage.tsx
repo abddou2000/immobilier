@@ -1,9 +1,8 @@
-﻿import { MessageCircle, Search, SlidersHorizontal } from "lucide-react";
+﻿import { MessageCircle, Search } from "lucide-react";
 import type { Property, Transaction } from "@/data/site";
 import { purchaseProperties, rentalProperties } from "@/data/site";
-import { FilterPill } from "./PremiumButton";
+import { InteractiveListings } from "./InteractiveListings";
 import { PageHero } from "./PageHero";
-import { PropertyCard } from "./PropertyCard";
 import { SearchPanel } from "./SearchPanel";
 import { DistrictMap } from "./DistrictMap";
 
@@ -57,29 +56,7 @@ export function ListingPage({ mode }: { mode: Transaction }) {
                 <DistrictMap compact />
               </div>
             </aside>
-            <div>
-              <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                  {filters.map((filter, index) => (
-                    <FilterPill key={filter} active={index === 0} icon={SlidersHorizontal}>
-                      {filter}
-                    </FilterPill>
-                  ))}
-                </div>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                  {["Recent", "Prix", "Surface"].map((sort, index) => (
-                    <FilterPill key={sort} active={index === 0}>
-                      {sort}
-                    </FilterPill>
-                  ))}
-                </div>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2">
-                {listings.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
-                ))}
-              </div>
-            </div>
+            <InteractiveListings properties={listings} mode={mode} filters={filters} />
           </div>
         </div>
       </section>

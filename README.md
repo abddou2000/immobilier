@@ -1,10 +1,11 @@
 # Marrakech Real Estate Frontend
 
-Prototype frontend premium pour une agence immobiliere a Marrakech.
+Frontend premium Next.js pour une agence immobiliere a Marrakech.
 
 ## Lancer le projet
 
 ```bash
+npm install
 npm run dev
 ```
 
@@ -14,9 +15,20 @@ Puis ouvrir :
 http://localhost:6895
 ```
 
-## Contenu
+## Routes
 
-- Page d'accueil immersive avec scene 3D
-- Pages Acheter, Louer, Quartiers, Guides, Agence et Contact
-- Image hero locale
-- Serveur local Node.js sans dependance externe
+- `/`
+- `/acheter`
+- `/louer`
+- `/quartiers`
+- `/guides`
+- `/agence`
+- `/contact`
+
+## Stack
+
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- lucide-react
+- Three.js

@@ -1,0 +1,1691 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atlas Keys Marrakech - Frontend</title>
+    <meta
+      name="description"
+      content="Frontend premium pour une agence immobiliere a Marrakech: recherche de biens, quartiers, confiance juridique et leads."
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: "#1E2422",
+              palm: "#24483E",
+              agave: "#789B83",
+              clay: "#B45F3D",
+              saffron: "#D8A14B",
+              sand: "#F4EEE4",
+              pearl: "#FBF8F2",
+              night: "#16201D",
+            },
+            boxShadow: {
+              soft: "0 22px 70px rgba(22, 32, 29, .14)",
+              lift: "0 16px 36px rgba(30, 36, 34, .12)",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: #fbf8f2;
+        color: #1e2422;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      .serif { font-family: Georgia, "Times New Roman", serif; }
+      .hero {
+        background-image:
+          linear-gradient(90deg, rgba(18, 25, 23, .88) 0%, rgba(18, 25, 23, .72) 34%, rgba(18, 25, 23, .18) 70%),
+          url("./assets/marrakech-riad-hero.png");
+        background-position: center;
+        background-size: cover;
+      }
+      .glass {
+        background: rgba(255, 255, 255, .86);
+        backdrop-filter: blur(18px);
+      }
+      .map-grid {
+        background-image:
+          linear-gradient(rgba(36,72,62,.12) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(36,72,62,.12) 1px, transparent 1px);
+        background-size: 38px 38px;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .three-layer canvas {
+        display: block;
+        height: 100%;
+        width: 100%;
+      }
+      .motion-border {
+        position: relative;
+        overflow: hidden;
+      }
+      .motion-border::before {
+        animation: sweep 5s linear infinite;
+        background: linear-gradient(90deg, transparent, rgba(216, 161, 75, .7), transparent);
+        content: "";
+        height: 1px;
+        left: -40%;
+        position: absolute;
+        right: -40%;
+        top: 0;
+      }
+      .lift-card {
+        transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+      }
+      .lift-card:hover {
+        border-color: rgba(180, 95, 61, .26);
+        box-shadow: 0 24px 60px rgba(30, 36, 34, .16);
+        transform: translateY(-6px);
+      }
+      .btn-core {
+        --btn-bg: #1e2422;
+        --btn-fg: #fff;
+        --btn-border: rgba(216,161,75,.28);
+        --btn-edge: #d8a14b;
+        --btn-shadow: rgba(22,32,29,.24);
+        align-items: center;
+        background: var(--btn-bg);
+        border: 1px solid var(--btn-border);
+        border-radius: 0;
+        clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+        color: var(--btn-fg);
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 14px;
+        font-weight: 850;
+        gap: .72rem;
+        isolation: isolate;
+        justify-content: center;
+        min-height: 52px;
+        overflow: hidden;
+        padding: 0 19px 0 14px;
+        position: relative;
+        text-align: center;
+        transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease, background .24s ease, color .24s ease;
+        user-select: none;
+      }
+      .btn-core::before {
+        background: var(--btn-edge);
+        content: "";
+        height: 62%;
+        left: 8px;
+        opacity: .72;
+        position: absolute;
+        top: 19%;
+        transform: scaleY(.46);
+        transform-origin: center;
+        transition: transform .28s ease, opacity .28s ease;
+        width: 2px;
+        z-index: 0;
+      }
+      .btn-core::after {
+        border: 1px solid rgba(255,255,255,.18);
+        clip-path: inherit;
+        content: "";
+        inset: 2px;
+        opacity: .55;
+        pointer-events: none;
+        position: absolute;
+      }
+      .btn-core:hover {
+        border-color: var(--btn-edge);
+        box-shadow: 0 18px 38px var(--btn-shadow), 0 0 0 1px rgba(216,161,75,.12);
+        transform: translateY(-2px);
+      }
+      .btn-core:hover::before {
+        opacity: 1;
+        transform: scaleY(1);
+      }
+      .btn-core:active {
+        box-shadow: 0 8px 20px var(--btn-shadow);
+        transform: translateY(0);
+      }
+      .btn-core:focus-visible,
+      .icon-action:focus-visible,
+      .segmented-option:focus-visible,
+      .filter-pill:focus-visible,
+      .map-pin-button:focus-visible,
+      .guide-action:focus-visible {
+        outline: 2px solid #d8a14b;
+        outline-offset: 3px;
+      }
+      .btn-signature {
+        --btn-bg: linear-gradient(180deg, #2d211c 0%, #1b1714 100%);
+        --btn-fg: #fbf8f2;
+        --btn-border: rgba(216,161,75,.42);
+        --btn-edge: #d8a14b;
+        --btn-shadow: rgba(45,33,28,.32);
+      }
+      .btn-dark {
+        --btn-bg: linear-gradient(180deg, #24483e 0%, #16201d 100%);
+        --btn-fg: #fbf8f2;
+        --btn-border: rgba(120,155,131,.28);
+        --btn-edge: #789b83;
+        --btn-shadow: rgba(22,32,29,.3);
+      }
+      .btn-light {
+        --btn-bg: #fbf8f2;
+        --btn-fg: #1e2422;
+        --btn-border: rgba(30,36,34,.14);
+        --btn-edge: #b45f3d;
+        --btn-shadow: rgba(30,36,34,.12);
+      }
+      .btn-glass {
+        --btn-bg: rgba(255,255,255,.105);
+        --btn-fg: #fff;
+        --btn-border: rgba(255,255,255,.24);
+        --btn-edge: #d8a14b;
+        --btn-shadow: rgba(0,0,0,.22);
+        backdrop-filter: blur(18px);
+      }
+      .btn-ghost {
+        --btn-bg: #f4eee4;
+        --btn-fg: #24483e;
+        --btn-border: rgba(36,72,62,.16);
+        --btn-edge: #24483e;
+        --btn-shadow: rgba(36,72,62,.12);
+      }
+      .btn-compact {
+        min-height: 42px;
+        padding: 0 14px 0 12px;
+      }
+      .btn-icon-slot {
+        align-items: center;
+        background: rgba(255,255,255,.11);
+        border: 1px solid rgba(255,255,255,.14);
+        clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+        display: inline-flex;
+        height: 29px;
+        justify-content: center;
+        position: relative;
+        transition: transform .24s ease, background .24s ease;
+        width: 28px;
+        z-index: 1;
+      }
+      .btn-light .btn-icon-slot,
+      .btn-ghost .btn-icon-slot {
+        background: rgba(36,72,62,.08);
+        border-color: rgba(36,72,62,.12);
+      }
+      .btn-core:hover .btn-icon-slot {
+        transform: translateX(2px);
+      }
+      .btn-label {
+        line-height: 1;
+        position: relative;
+        z-index: 1;
+      }
+      .icon-action {
+        --icon-bg: #fbf8f2;
+        --icon-fg: #1e2422;
+        --icon-edge: #d8a14b;
+        align-items: center;
+        background: var(--icon-bg);
+        border: 1px solid rgba(216,161,75,.18);
+        clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+        color: var(--icon-fg);
+        display: inline-flex;
+        height: 44px;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+        transition: transform .22s ease, box-shadow .22s ease, background .22s ease, color .22s ease, border-color .22s ease;
+        width: 44px;
+      }
+      .icon-action::after {
+        background: var(--icon-edge);
+        bottom: 7px;
+        content: "";
+        height: 2px;
+        opacity: .7;
+        position: absolute;
+        right: 7px;
+        transition: width .22s ease, opacity .22s ease;
+        width: 10px;
+      }
+      .icon-action:hover {
+        border-color: var(--icon-edge);
+        box-shadow: 0 14px 28px rgba(30,36,34,.14);
+        transform: translateY(-2px);
+      }
+      .icon-action:hover::after {
+        opacity: 1;
+        width: 22px;
+      }
+      .icon-action:active {
+        transform: scale(.96);
+      }
+      .icon-action-light {
+        --icon-bg: rgba(255,255,255,.94);
+        --icon-fg: #1e2422;
+        --icon-edge: #b45f3d;
+      }
+      .icon-action-glass {
+        --icon-bg: rgba(255,255,255,.11);
+        --icon-fg: #fff;
+        --icon-edge: #d8a14b;
+        backdrop-filter: blur(16px);
+      }
+      .icon-action-favorite:hover {
+        --icon-bg: #2d211c;
+        --icon-edge: #d8a14b;
+        color: #fff;
+      }
+      .segmented-control {
+        align-items: center;
+        clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+        display: inline-flex;
+        gap: 3px;
+        padding: 5px;
+      }
+      .segmented-light {
+        background: rgba(255,255,255,.105);
+        border: 1px solid rgba(255,255,255,.22);
+        backdrop-filter: blur(18px);
+      }
+      .segmented-plain {
+        background: rgba(244,238,228,.82);
+        border: 1px solid rgba(30,36,34,.12);
+      }
+      .segmented-option {
+        align-items: center;
+        border: 1px solid transparent;
+        clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 850;
+        height: 36px;
+        justify-content: center;
+        min-width: 42px;
+        padding: 0 12px;
+        position: relative;
+        transition: background .2s ease, color .2s ease, transform .2s ease, border-color .2s ease;
+      }
+      .segmented-option:hover {
+        transform: translateY(-1px);
+      }
+      .segmented-option.is-active {
+        background: #fbf8f2;
+        border-color: rgba(216,161,75,.34);
+        color: #1e2422;
+      }
+      .segmented-option.is-active::after {
+        background: #d8a14b;
+        bottom: 5px;
+        content: "";
+        height: 2px;
+        position: absolute;
+        right: 7px;
+        width: 14px;
+      }
+      .segmented-plain .segmented-option.is-active {
+        background: #24483e;
+        color: #fff;
+      }
+      .segmented-light .segmented-option:not(.is-active) {
+        color: rgba(255,255,255,.72);
+      }
+      .segmented-plain .segmented-option:not(.is-active) {
+        color: rgba(30,36,34,.62);
+      }
+      .filter-pill {
+        align-items: center;
+        background: rgba(255,255,255,.86);
+        border: 1px solid rgba(36,72,62,.12);
+        clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+        color: rgba(30,36,34,.78);
+        display: inline-flex;
+        font-size: 13px;
+        font-weight: 800;
+        gap: 8px;
+        height: 42px;
+        padding: 0 15px;
+        position: relative;
+        transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
+        white-space: nowrap;
+      }
+      .filter-pill::before {
+        background: #d8a14b;
+        content: "";
+        height: 16px;
+        left: 7px;
+        opacity: .55;
+        position: absolute;
+        transform: scaleY(.2);
+        transition: transform .2s ease, opacity .2s ease;
+        width: 2px;
+      }
+      .filter-pill:hover {
+        box-shadow: 0 12px 26px rgba(30,36,34,.11);
+        transform: translateY(-2px);
+      }
+      .filter-pill:hover::before {
+        opacity: 1;
+        transform: scaleY(1);
+      }
+      .filter-pill.is-active {
+        background: #1e2422;
+        border-color: rgba(216,161,75,.36);
+        color: #fff;
+      }
+      .search-token {
+        align-items: center;
+        background: rgba(244,238,228,.84);
+        border: 1px solid rgba(30,36,34,.07);
+        clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        gap: 7px;
+        padding: 9px 12px;
+        transition: transform .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
+      }
+      .search-token:hover {
+        background: #24483e;
+        border-color: rgba(216,161,75,.36);
+        color: #fff;
+        transform: translateY(-1px);
+      }
+      .map-pin-button {
+        align-items: center;
+        border: 1px solid rgba(30,36,34,.1);
+        clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+        display: flex;
+        font-weight: 850;
+        gap: 8px;
+        overflow: visible;
+        padding: 9px 12px;
+        transition: transform .22s ease, box-shadow .22s ease;
+      }
+      .map-pin-button:hover {
+        box-shadow: 0 18px 34px rgba(30,36,34,.16);
+        transform: translate(-50%, calc(-50% - 4px));
+      }
+      .guide-action {
+        align-items: center;
+        clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+        display: flex;
+        justify-content: space-between;
+        min-height: 58px;
+        overflow: hidden;
+        position: relative;
+        transition: transform .22s ease, background .22s ease, border-color .22s ease;
+      }
+      .guide-action::after {
+        background: linear-gradient(90deg, rgba(216,161,75,.22), transparent 28%);
+        content: "";
+        inset: 0;
+        opacity: .16;
+        position: absolute;
+        transition: opacity .22s ease;
+      }
+      .guide-action:hover {
+        background: rgba(255,255,255,.13);
+        border-color: rgba(216,161,75,.38);
+        transform: translateY(-2px);
+      }
+      .guide-action:hover::after {
+        opacity: 1;
+      }
+      .floating-dock {
+        align-items: center;
+        background: rgba(22,32,29,.76);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,.16);
+        bottom: 18px;
+        box-shadow: 0 24px 60px rgba(0,0,0,.28);
+        clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+        display: flex;
+        gap: 8px;
+        left: 50%;
+        padding: 8px;
+        position: fixed;
+        transform: translateX(-50%);
+        z-index: 70;
+      }
+      .dock-button {
+        background: rgba(255,255,255,.1);
+        color: #fff;
+        position: relative;
+      }
+      .dock-button.primary {
+        background: #d8a14b;
+        color: #16201d;
+      }
+      .dock-tip {
+        background: #fff;
+        border-radius: 6px;
+        bottom: calc(100% + 10px);
+        box-shadow: 0 12px 30px rgba(0,0,0,.18);
+        color: #1e2422;
+        font-size: 11px;
+        font-weight: 800;
+        left: 50%;
+        opacity: 0;
+        padding: 7px 9px;
+        pointer-events: none;
+        position: absolute;
+        transform: translate(-50%, 6px);
+        transition: opacity .18s ease, transform .18s ease;
+        white-space: nowrap;
+      }
+      .dock-button:hover .dock-tip {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .ticker-track {
+        animation: ticker 26s linear infinite;
+        width: max-content;
+      }
+      .pulse-line {
+        animation: pulseLine 2.8s ease-in-out infinite;
+      }
+      .float-soft {
+        animation: floatSoft 7s ease-in-out infinite;
+      }
+      @keyframes sweep {
+        from { transform: translateX(-30%); }
+        to { transform: translateX(30%); }
+      }
+      @keyframes ticker {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); }
+      }
+      @keyframes pulseLine {
+        0%, 100% { opacity: .35; transform: scaleX(.72); }
+        50% { opacity: 1; transform: scaleX(1); }
+      }
+      @keyframes floatSoft {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .motion-border::before,
+        .ticker-track,
+        .pulse-line,
+        .float-soft {
+          animation: none;
+        }
+        .lift-card:hover {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useEffect, useMemo, useRef, useState } = React;
+
+      const Icon = ({ name, size = 18, className = "" }) => {
+        useEffect(() => {
+          lucide.createIcons();
+        });
+        return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
+      };
+
+      const properties = [
+        {
+          title: "Riad titré avec bassin",
+          type: "Vente",
+          district: "Medina",
+          price: "4 850 000 MAD",
+          euro: "435 000 EUR",
+          area: "286 m2",
+          rooms: "6 suites",
+          tag: "Titre foncier confirme",
+          tone: "from-clay/90 to-saffron/75",
+          image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80",
+        },
+        {
+          title: "Villa contemporaine jardin",
+          type: "Location",
+          district: "Palmeraie",
+          price: "38 000 MAD/mois",
+          euro: "3 410 EUR/mois",
+          area: "520 m2",
+          rooms: "5 chambres",
+          tag: "Visite video possible",
+          tone: "from-palm/90 to-agave/80",
+          image: "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=900&q=80",
+        },
+        {
+          title: "Appartement standing terrasse",
+          type: "Vente",
+          district: "Gueliz",
+          price: "2 150 000 MAD",
+          euro: "193 000 EUR",
+          area: "134 m2",
+          rooms: "3 pieces",
+          tag: "Fort rendement locatif",
+          tone: "from-night/90 to-palm/80",
+          image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80",
+        },
+      ];
+
+      const districts = [
+        ["Medina", "Riads, charme historique", "21 biens", "Prix moyen 18 500 MAD/m2"],
+        ["Palmeraie", "Villas, jardins, calme", "14 biens", "Prix moyen 24 000 MAD/m2"],
+        ["Hivernage", "Prestige et hotellerie", "11 biens", "Prix moyen 26 800 MAD/m2"],
+        ["Gueliz", "Vie urbaine moderne", "33 biens", "Prix moyen 17 200 MAD/m2"],
+      ];
+
+      const purchaseProperties = [
+        ...properties,
+        {
+          title: "Terrain villa route Ourika",
+          type: "Vente",
+          district: "Route Ourika",
+          price: "3 900 000 MAD",
+          euro: "350 000 EUR",
+          area: "1 640 m2",
+          rooms: "Zone villa",
+          tag: "Potentiel construction",
+          tone: "from-saffron/90 to-clay/70",
+          image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80",
+        },
+        {
+          title: "Riad boutique-hotel",
+          type: "Vente",
+          district: "Kasbah",
+          price: "8 700 000 MAD",
+          euro: "781 000 EUR",
+          area: "410 m2",
+          rooms: "9 chambres",
+          tag: "Licence maison d'hotes",
+          tone: "from-night/90 to-clay/80",
+          image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80",
+        },
+        {
+          title: "Villa golf Atlas",
+          type: "Vente",
+          district: "Agdal",
+          price: "12 400 000 MAD",
+          euro: "1 114 000 EUR",
+          area: "740 m2",
+          rooms: "6 chambres",
+          tag: "Vue Atlas et golf",
+          tone: "from-palm/90 to-saffron/70",
+          image: "https://images.unsplash.com/photo-1613977257592-4871e5fcd7c4?auto=format&fit=crop&w=900&q=80",
+        },
+      ];
+
+      const rentalProperties = [
+        {
+          title: "Villa meublee longue duree",
+          type: "Location",
+          district: "Targa",
+          price: "24 000 MAD/mois",
+          euro: "2 155 EUR/mois",
+          area: "360 m2",
+          rooms: "4 chambres",
+          tag: "Bail flexible",
+          tone: "from-palm/90 to-agave/75",
+          image: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=900&q=80",
+        },
+        {
+          title: "Appartement skyline terrasse",
+          type: "Location",
+          district: "Hivernage",
+          price: "18 500 MAD/mois",
+          euro: "1 661 EUR/mois",
+          area: "148 m2",
+          rooms: "3 chambres",
+          tag: "Residence securisee",
+          tone: "from-night/90 to-saffron/70",
+          image: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=80",
+        },
+        {
+          title: "Riad intimiste meuble",
+          type: "Location",
+          district: "Medina",
+          price: "29 000 MAD/mois",
+          euro: "2 604 EUR/mois",
+          area: "250 m2",
+          rooms: "5 suites",
+          tag: "Piscine chauffee",
+          tone: "from-clay/90 to-palm/75",
+          image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80",
+        },
+      ];
+
+      const quartierDetails = [
+        ["Medina", "Riads authentiques, maisons d'hotes, experience patrimoniale.", "Acheteurs et investisseurs boutique-hotel", "Forte valeur de charme, vigilance juridique elevee"],
+        ["Palmeraie", "Villas discretes, grands jardins, residences de luxe.", "Familles, Golfe, location premium", "Liquidite selective, fortes exigences photos"],
+        ["Gueliz", "Appartements modernes, commerces, restaurants, vie urbaine.", "Locataires expatries et investisseurs rendement", "Demande reguliere, ticket d'entree plus accessible"],
+        ["Hivernage", "Prestige hotelier, restaurants, proximite centre et Menara.", "Clients premium et location courte duree", "Prix eleves, excellente desirabilite"],
+        ["Agdal", "Resorts, golf, programmes recents et villas contemporaines.", "Investisseurs et residences secondaires", "Bon potentiel locatif saisonnier"],
+        ["Route Ourika", "Terrains, villas avec vue Atlas, grands volumes.", "Familles et projets sur mesure", "Potentiel de valorisation, verifier urbanisme"],
+      ];
+
+      const guideCards = [
+        ["Acheter un riad a Marrakech", "Etapes, documents, notaire, verification du titre et pieges a eviter.", "16 min", "file-text"],
+        ["Investir en location saisonniere", "Rendement, quartiers, autorisations, ameublement et gestion.", "12 min", "bar-chart-3"],
+        ["Guide acheteur etranger", "Transfert des fonds, acquisition, fiscalite, rapatriement et change.", "18 min", "globe-2"],
+        ["Vendre son bien a Marrakech", "Estimation, mandat, photos, diffusion internationale et negociation.", "10 min", "home"],
+        ["Moulkiya, TF et securite juridique", "Comprendre les statuts et organiser la due diligence.", "14 min", "shield-check"],
+        ["Choisir son quartier", "Style de vie, budget, transports, ecoles et potentiel de revente.", "9 min", "map"],
+      ];
+
+      const teamMembers = [
+        ["Salma El Idrissi", "Direction agence", "Mandats premium, relation vendeurs, strategie prix."],
+        ["Youssef Ait Mansour", "Conseil investissement", "Rendement, montage dossier, acheteurs internationaux."],
+        ["Nadia Benjelloun", "Experience client", "Visites video, suivi a distance, coordination notaire."],
+      ];
+
+      const processSteps = [
+        ["01", "Qualification", "Budget, devise, quartier, usage et contraintes juridiques."],
+        ["02", "Selection verifiee", "Biens filtres par statut, potentiel et coherence prix."],
+        ["03", "Visite & negociation", "Visite sur place ou video, compte-rendu et offre structuree."],
+        ["04", "Signature", "Coordination notaire, documents, compromis et suivi dossier."],
+      ];
+
+      function MarrakechThreeScene({ className = "", compact = false }) {
+        const mountRef = useRef(null);
+
+        useEffect(() => {
+          const mount = mountRef.current;
+          if (!mount || !window.THREE) return undefined;
+
+          const THREE = window.THREE;
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+          camera.position.set(0, compact ? 2.4 : 2.1, compact ? 7 : 8.4);
+          camera.lookAt(0, -0.15, 0);
+
+          const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
+          renderer.outputColorSpace = THREE.SRGBColorSpace;
+          mount.appendChild(renderer.domElement);
+
+          const root = new THREE.Group();
+          scene.add(root);
+
+          const makeMat = (color, options = {}) => (
+            new THREE.MeshStandardMaterial({
+              color,
+              roughness: options.roughness ?? .62,
+              metalness: options.metalness ?? 0,
+              transparent: options.transparent ?? false,
+              opacity: options.opacity ?? 1,
+              emissive: options.emissive ?? 0x000000,
+              emissiveIntensity: options.emissiveIntensity ?? 0,
+            })
+          );
+
+          const clayMat = makeMat(0xb45f3d);
+          const paleMat = makeMat(0xf4eee4);
+          const palmMat = makeMat(0x24483e);
+          const saffronMat = makeMat(0xd8a14b, { metalness: .34, roughness: .28 });
+          const waterMat = makeMat(0x4f9b93, { transparent: true, opacity: .62, roughness: .2, metalness: .08, emissive: 0x17443e, emissiveIntensity: .18 });
+
+          const ambient = new THREE.HemisphereLight(0xfaf3df, 0x17231f, 1.4);
+          const sun = new THREE.DirectionalLight(0xffd49a, 2.8);
+          sun.position.set(-4, 6, 5);
+          const edge = new THREE.PointLight(0xd8a14b, 1.8, 16);
+          edge.position.set(3.5, 1.5, 2.4);
+          scene.add(ambient, sun, edge);
+
+          const tileGeo = new THREE.BoxGeometry(.32, .045, .32);
+          for (let x = -6; x <= 6; x += 1) {
+            for (let z = -4; z <= 4; z += 1) {
+              const palette = (x + z) % 4 === 0 ? paleMat : (x + z) % 3 === 0 ? palmMat : clayMat;
+              const tile = new THREE.Mesh(tileGeo, palette);
+              tile.position.set(x * .43, -1.32, z * .43);
+              tile.rotation.y = Math.PI / 4;
+              tile.userData.wave = (x * 13 + z * 7) * .08;
+              root.add(tile);
+            }
+          }
+
+          const pool = new THREE.Mesh(new THREE.BoxGeometry(1.8, .06, 1.08), waterMat);
+          pool.position.set(.08, -1.24, .1);
+          root.add(pool);
+
+          const columnGeo = new THREE.BoxGeometry(.28, 1.38, .28);
+          const beamGeo = new THREE.BoxGeometry(1.55, .18, .24);
+          [-2.25, 2.25].forEach((x) => {
+            [-1.25, 1.25].forEach((z) => {
+              const column = new THREE.Mesh(columnGeo, x < 0 ? clayMat : paleMat);
+              column.position.set(x, -.62, z);
+              root.add(column);
+            });
+          });
+          [-1.25, 1.25].forEach((z) => {
+            const beam = new THREE.Mesh(beamGeo, saffronMat);
+            beam.position.set(0, .05, z);
+            beam.scale.x = 3.2;
+            root.add(beam);
+          });
+
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(2.8, .018, 16, 160), saffronMat);
+          ring.position.set(.18, -.18, -1.15);
+          root.add(ring);
+
+          const ribbon = new THREE.Group();
+          const diamondGeo = new THREE.BoxGeometry(.18, .026, .18);
+          for (let i = 0; i < 34; i += 1) {
+            const diamond = new THREE.Mesh(diamondGeo, i % 3 === 0 ? saffronMat : i % 2 === 0 ? paleMat : clayMat);
+            const angle = i * .43;
+            const radius = 2.45 + Math.sin(i) * .22;
+            diamond.position.set(Math.cos(angle) * radius, .45 + Math.sin(i * .7) * .42, Math.sin(angle) * .62 - .65);
+            diamond.rotation.set(.7, angle, Math.PI / 4);
+            diamond.userData.float = i * .18;
+            diamond.userData.baseY = diamond.position.y;
+            ribbon.add(diamond);
+          }
+          root.add(ribbon);
+
+          const markerGeo = new THREE.CylinderGeometry(.07, .1, .34, 5);
+          [
+            [-1.45, .1, .85, 0xb45f3d],
+            [1.15, .2, .72, 0x24483e],
+            [.75, .05, -1.15, 0xd8a14b],
+            [-.35, .14, -1.42, 0xf4eee4],
+          ].forEach(([x, y, z, color]) => {
+            const marker = new THREE.Mesh(markerGeo, makeMat(color, { metalness: .15, roughness: .4 }));
+            marker.position.set(x, y, z);
+            marker.rotation.x = .25;
+            root.add(marker);
+          });
+
+          const lineMat = new THREE.LineBasicMaterial({ color: 0xd8a14b, transparent: true, opacity: .45 });
+          const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-2.6, -.9, .95),
+            new THREE.Vector3(-1.2, -.45, .2),
+            new THREE.Vector3(.55, -.68, -.75),
+            new THREE.Vector3(2.35, -.18, -.25),
+          ]);
+          const path = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(80)), lineMat);
+          root.add(path);
+
+          const pointer = { x: 0, y: 0 };
+          const onPointerMove = (event) => {
+            const rect = mount.getBoundingClientRect();
+            pointer.x = ((event.clientX - rect.left) / rect.width - .5) || 0;
+            pointer.y = ((event.clientY - rect.top) / rect.height - .5) || 0;
+          };
+          window.addEventListener("pointermove", onPointerMove);
+
+          const resize = () => {
+            const width = mount.clientWidth || 900;
+            const height = mount.clientHeight || 640;
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+          };
+          resize();
+          const resizeObserver = new ResizeObserver(resize);
+          resizeObserver.observe(mount);
+
+          let frameId = 0;
+          const clock = new THREE.Clock();
+          const animate = () => {
+            const time = clock.getElapsedTime();
+            root.rotation.y = Math.sin(time * .24) * .12 + pointer.x * .2;
+            root.rotation.x = -0.08 + pointer.y * .08;
+            root.position.y = Math.sin(time * .55) * .045;
+            ring.rotation.z = time * .08;
+            ribbon.rotation.y = time * .12;
+            ribbon.children.forEach((child) => {
+              child.position.y = child.userData.baseY + Math.sin(time * 1.8 + child.userData.float) * .08;
+              child.rotation.z += .003;
+            });
+            root.children.forEach((child) => {
+              if (child.userData.wave !== undefined) {
+                child.position.y = -1.32 + Math.sin(time * 1.1 + child.userData.wave) * .012;
+              }
+            });
+            renderer.render(scene, camera);
+            frameId = requestAnimationFrame(animate);
+          };
+          animate();
+
+          return () => {
+            cancelAnimationFrame(frameId);
+            resizeObserver.disconnect();
+            window.removeEventListener("pointermove", onPointerMove);
+            renderer.dispose();
+            if (renderer.domElement.parentElement === mount) {
+              mount.removeChild(renderer.domElement);
+            }
+          };
+        }, [compact]);
+
+        return <div ref={mountRef} className={`three-layer ${className}`} aria-hidden="true" />;
+      }
+
+      function Button({ children, variant = "dark", icon, className = "", compact = false, ariaLabel, href, onClick }) {
+        const styles = {
+          dark: "btn-dark",
+          light: "btn-light",
+          clay: "btn-signature",
+          signature: "btn-signature",
+          glass: "btn-glass",
+          ghost: "btn-ghost",
+        };
+        const classNames = `btn-core ${styles[variant] || styles.dark} ${compact ? "btn-compact" : ""} ${className}`;
+        const content = (
+          <>
+            {icon && <span className="btn-icon-slot"><Icon name={icon} size={16} /></span>}
+            <span className="btn-label">{children}</span>
+          </>
+        );
+        if (href) {
+          return <a href={href} aria-label={ariaLabel} className={classNames}>{content}</a>;
+        }
+        return (
+          <button type="button" aria-label={ariaLabel} onClick={onClick} className={classNames}>
+            {content}
+          </button>
+        );
+      }
+
+      function IconButton({ icon, label, variant = "light", className = "" }) {
+        const styles = {
+          light: "icon-action-light",
+          glass: "icon-action-glass",
+          favorite: "icon-action-light icon-action-favorite",
+        };
+        return (
+          <button type="button" aria-label={label} title={label} className={`icon-action ${styles[variant] || styles.light} ${className}`}>
+            <Icon name={icon} size={18} />
+          </button>
+        );
+      }
+
+      function SegmentedControl({ items, active = 0, tone = "plain", className = "" }) {
+        return (
+          <div className={`segmented-control segmented-${tone} ${className}`} role="tablist">
+            {items.map((item, index) => (
+              <button
+                type="button"
+                key={item}
+                aria-pressed={index === active}
+                className={`segmented-option ${index === active ? "is-active" : ""}`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        );
+      }
+
+      function FilterPill({ children, active = false, icon = "plus" }) {
+        return (
+          <button type="button" aria-pressed={active} className={`filter-pill ${active ? "is-active" : ""}`}>
+            <Icon name={active ? "check" : icon} size={14} />
+            {children}
+          </button>
+        );
+      }
+
+      function getRouteFromHash() {
+        const raw = window.location.hash.replace(/^#\/?/, "");
+        if (!raw || raw === "home" || raw === "accueil") return "accueil";
+        if (["acheter", "louer", "quartiers", "guides", "agence", "contact"].includes(raw)) return raw;
+        return "accueil";
+      }
+
+      function useHashRoute() {
+        const [route, setRoute] = useState(getRouteFromHash);
+        useEffect(() => {
+          const update = () => {
+            setRoute(getRouteFromHash());
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          };
+          window.addEventListener("hashchange", update);
+          return () => window.removeEventListener("hashchange", update);
+        }, []);
+        return route;
+      }
+
+      function Nav({ route }) {
+        const navItems = [
+          ["acheter", "Acheter"],
+          ["louer", "Louer"],
+          ["quartiers", "Quartiers"],
+          ["guides", "Guides"],
+          ["agence", "Agence"],
+          ["contact", "Contact"],
+        ];
+        return (
+          <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-night/72 text-white backdrop-blur-xl">
+            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+              <a href="#/accueil" className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-saffron text-night">
+                  <Icon name="key-round" size={20} />
+                </span>
+                <span>
+                  <span className="block text-sm font-bold tracking-wide">Atlas Keys</span>
+                  <span className="block text-[11px] text-white/62">Marrakech Real Estate</span>
+                </span>
+              </a>
+              <nav className="hidden items-center gap-7 text-sm text-white/78 lg:flex">
+                {navItems.map(([key, label]) => (
+                  <a
+                    key={key}
+                    className={`${route === key ? "text-white" : "text-white/72"} border-b border-transparent pb-1 transition hover:border-saffron hover:text-white`}
+                    href={`#/${key}`}
+                  >
+                    {label}
+                  </a>
+                ))}
+              </nav>
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:block">
+                  <SegmentedControl items={["FR", "EN", "AR"]} active={0} tone="light" />
+                </div>
+                <div className="hidden sm:block">
+                  <Button variant="glass" icon="calendar-check" compact>RDV</Button>
+                </div>
+                <IconButton icon="menu" label="Menu" variant="glass" className="lg:hidden" />
+              </div>
+            </div>
+            <div className="border-t border-white/10 px-4 py-2 lg:hidden">
+              <div className="no-scrollbar flex gap-2 overflow-x-auto">
+                {navItems.map(([key, label]) => (
+                  <a
+                    key={key}
+                    href={`#/${key}`}
+                    className={`shrink-0 px-3 py-2 text-xs font-bold uppercase tracking-wide ${route === key ? "text-saffron" : "text-white/62"}`}
+                  >
+                    {label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </header>
+        );
+      }
+
+      function SearchPanel({ operation = "Acheter" }) {
+        const fields = [
+          ["Operation", operation, "home"],
+          ["Type de bien", "Riad, villa, appartement", "building-2"],
+          ["Quartier", "Medina, Palmeraie...", "map-pin"],
+          ["Budget", "MAD / EUR / USD", "wallet"],
+        ];
+        return (
+          <div className="glass motion-border rounded-lg border border-white/80 p-3 shadow-soft">
+            <div className="grid gap-2 md:grid-cols-4">
+              {fields.map(([label, value, icon]) => (
+                <label key={label} className="flex min-h-[72px] items-center gap-3 rounded-md border border-black/8 bg-white px-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-sand text-palm">
+                    <Icon name={icon} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold uppercase text-ink/45">{label}</span>
+                    <span className="block truncate text-sm font-semibold text-ink">{value}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-2 text-xs font-medium text-ink/65">
+                {["Titre foncier", "Piscine", "Visite 360", "Etrangers OK"].map((item) => (
+                  <button key={item} className="search-token">
+                    <Icon name="plus" size={13} />
+                    {item}
+                  </button>
+                ))}
+              </div>
+              <Button variant="signature" icon="search" className="w-full sm:w-auto">Rechercher</Button>
+            </div>
+          </div>
+        );
+      }
+
+      function Hero() {
+        return (
+          <section className="hero relative min-h-[760px] overflow-hidden pt-28 text-white md:min-h-[820px]">
+            <MarrakechThreeScene className="absolute bottom-0 right-0 top-16 w-full opacity-80 lg:left-[34%] lg:w-[66%]" />
+            <div className="absolute left-0 right-0 top-16 overflow-hidden border-y border-white/10 bg-night/24 py-2 backdrop-blur-md">
+              <div className="ticker-track flex gap-8 text-xs font-semibold uppercase tracking-[.24em] text-white/58">
+                {["Biens verifies", "Recherche IA", "Visites video", "Quartiers 3D", "SEO international", "Espace acheteur"].map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+                {["Biens verifies", "Recherche IA", "Visites video", "Quartiers 3D", "SEO international", "Espace acheteur"].map((item) => (
+                  <span key={`b-${item}`}>{item}</span>
+                ))}
+              </div>
+            </div>
+            <div className="relative z-10 mx-auto grid max-w-7xl gap-10 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-[1.02fr_.78fr] lg:px-8 lg:pt-28">
+              <div className="max-w-3xl">
+                <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/18 bg-white/10 px-3 py-2 text-sm text-white/82 backdrop-blur">
+                  <Icon name="shield-check" size={16} />
+                  Theme anime 3D · biens verifies · FR / EN / AR
+                </div>
+                <h1 className="serif max-w-2xl text-5xl leading-[1.02] text-white sm:text-6xl lg:text-7xl">
+                  Immobilier premium a Marrakech, en immersion.
+                </h1>
+                <p className="mt-6 max-w-xl text-lg leading-8 text-white/80">
+                  Une recherche immobiliere plus expressive: quartiers animes, parcours rassurant, scene 3D et fiches pensees pour convertir les acheteurs locaux et internationaux.
+                </p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Button href="#/acheter" variant="signature" icon="home">Voir les annonces</Button>
+                  <Button href="#/contact" variant="glass" icon="video">Planifier une visite video</Button>
+                </div>
+                <div className="mt-10 grid max-w-2xl grid-cols-3 gap-3">
+                  {[["86", "biens actifs"], ["4.8/5", "avis clients"], ["30%", "leads internationaux"]].map(([value, label]) => (
+                    <div key={label} className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur">
+                      <div className="text-2xl font-bold">{value}</div>
+                      <div className="mt-1 text-xs uppercase text-white/58">{label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="self-end lg:pt-32">
+                <div className="float-soft mb-4 ml-auto hidden max-w-xs rounded-lg border border-white/15 bg-white/12 p-4 text-sm text-white/76 backdrop-blur-xl lg:block">
+                  <div className="flex items-center gap-2 font-bold text-white">
+                    <Icon name="sparkles" size={16} />
+                    Visualisation quartier active
+                  </div>
+                  <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/14">
+                    <div className="pulse-line h-full origin-left rounded-full bg-saffron"></div>
+                  </div>
+                </div>
+                <SearchPanel />
+              </div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-pearl to-transparent"></div>
+          </section>
+        );
+      }
+
+      function ImmersiveExperience() {
+        return (
+          <section className="relative min-h-[620px] overflow-hidden bg-ink py-20 text-white">
+            <MarrakechThreeScene compact className="absolute inset-y-0 right-0 w-full opacity-70 lg:left-[28%] lg:w-[72%]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/88 to-ink/20"></div>
+            <div className="relative z-10 mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[.82fr_1.18fr] lg:px-8">
+              <div className="self-center">
+                <p className="text-sm font-bold uppercase tracking-wider text-saffron">Experience 3D</p>
+                <h2 className="serif mt-2 text-4xl leading-tight md:text-5xl">Explorer Marrakech comme un parcours vivant.</h2>
+                <p className="mt-5 max-w-xl text-white/68">
+                  Le frontend peut evoluer vers une recherche immersive: selection de quartier, visualisation des biens, points de confiance et estimation du potentiel locatif.
+                </p>
+                <SegmentedControl items={["Acheter", "Louer", "Investir"]} active={0} tone="light" className="mt-8" />
+              </div>
+              <div className="grid content-end gap-4 pt-48 sm:grid-cols-3 lg:pt-72">
+                {[
+                  ["Medina", "Riad verifie", "4.85M MAD"],
+                  ["Palmeraie", "Villa locative", "38K MAD/mois"],
+                  ["Gueliz", "Rendement", "7.2% brut"],
+                ].map(([district, signal, value]) => (
+                  <div key={district} className="motion-border lift-card rounded-lg border border-white/14 bg-white/10 p-5 backdrop-blur-xl">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-bold">{district}</span>
+                      <Icon name="box" size={17} className="text-saffron" />
+                    </div>
+                    <div className="mt-5 text-2xl font-extrabold">{value}</div>
+                    <div className="mt-1 text-sm text-white/58">{signal}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      function PropertyCard({ item }) {
+        return (
+          <article className="lift-card overflow-hidden rounded-lg border border-black/8 bg-white shadow-lift">
+            <div className="relative h-64">
+              <img
+                src={item.image}
+                alt={item.title}
+                className="h-full w-full object-cover"
+                onError={(event) => { event.currentTarget.src = "./assets/marrakech-riad-hero.png"; }}
+              />
+              <div className={`absolute inset-0 bg-gradient-to-t ${item.tone} opacity-50`}></div>
+              <div className="absolute left-4 top-4 flex gap-2">
+                <span className="rounded-md bg-white px-3 py-1 text-xs font-bold text-ink">{item.type}</span>
+                <span className="rounded-md bg-night/70 px-3 py-1 text-xs font-bold text-white backdrop-blur">{item.district}</span>
+              </div>
+              <div className="absolute right-4 top-4 flex gap-2">
+                <IconButton icon="video" label="Demander une visite video" variant="light" />
+                <IconButton icon="heart" label="Ajouter aux favoris" variant="favorite" />
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-md bg-palm/8 px-2.5 py-1 text-xs font-bold text-palm">
+                <Icon name="badge-check" size={14} />
+                {item.tag}
+              </div>
+              <h3 className="text-xl font-bold text-ink">{item.title}</h3>
+              <p className="mt-2 text-sm text-ink/58">{item.area} · {item.rooms}</p>
+              <div className="mt-5 flex items-end justify-between gap-4">
+                <div>
+                  <div className="text-lg font-extrabold text-ink">{item.price}</div>
+                  <div className="text-xs text-ink/48">Indicatif {item.euro}</div>
+                </div>
+                <Button variant="ghost" icon="arrow-up-right" compact>Details</Button>
+              </div>
+            </div>
+          </article>
+        );
+      }
+
+      function Listings() {
+        return (
+          <section id="acheter" className="bg-pearl py-20">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wider text-clay">Selection premium</p>
+                  <h2 className="serif mt-2 text-4xl text-ink md:text-5xl">Biens a fort potentiel</h2>
+                </div>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                  {["Tous", "Riads", "Villas", "Appartements", "Terrains"].map((filter, index) => (
+                    <FilterPill key={filter} active={index === 0} icon="sliders-horizontal">{filter}</FilterPill>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-10 grid gap-6 md:grid-cols-3">
+                {properties.map((item) => <PropertyCard key={item.title} item={item} />)}
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      function TrustSection() {
+        return (
+          <section className="bg-white py-20">
+            <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wider text-palm">Agence de confiance</p>
+                <h2 className="serif mt-2 text-4xl leading-tight text-ink md:text-5xl">Une experience rassurante pour acheter a distance.</h2>
+                <p className="mt-5 max-w-xl text-ink/64">
+                  Le parcours met en avant les preuves qui comptent: statut juridique, verification des superficies, possibilite d'achat pour etrangers, rendez-vous video et suivi CRM.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  ["file-check-2", "Verification juridique", "Titre foncier, Moulkiya et documents essentiels visibles sur chaque fiche."],
+                  ["languages", "FR / EN / AR natif", "Parcours multilingue avec support RTL prevu pour la version arabe."],
+                  ["bot", "Assistant IA", "Recherche naturelle: budget, quartier, rendement, piscine, bail flexible."],
+                  ["bar-chart-3", "SEO hyperlocal", "Pages quartiers, guides acheteurs et contenu longue traine Marrakech."],
+                ].map(([icon, title, text]) => (
+                  <div key={title} className="rounded-lg border border-black/8 bg-pearl p-6">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-md bg-palm text-white"><Icon name={icon} /></span>
+                    <h3 className="mt-5 text-lg font-bold">{title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-ink/62">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      function DistrictsMap() {
+        return (
+          <section id="quartiers" className="bg-sand py-20">
+            <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_.92fr] lg:px-8">
+              <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-lift">
+                <div className="map-grid relative min-h-[520px] bg-[#eef2e9]">
+                  {[
+                    ["Medina", "left-[34%] top-[42%]", "bg-clay"],
+                    ["Gueliz", "left-[48%] top-[36%]", "bg-palm"],
+                    ["Hivernage", "left-[43%] top-[52%]", "bg-saffron"],
+                    ["Palmeraie", "left-[62%] top-[22%]", "bg-agave"],
+                    ["Ourika", "left-[58%] top-[70%]", "bg-night"],
+                  ].map(([name, pos, color]) => (
+                    <button key={name} className={`map-pin-button absolute ${pos} -translate-x-1/2 -translate-y-1/2 bg-white text-sm shadow-lift`}>
+                      <span className={`h-3 w-3 rounded-full ${color}`}></span>{name}
+                    </button>
+                  ))}
+                  <div className="absolute bottom-4 left-4 rounded-md bg-white/88 p-3 text-xs font-semibold text-ink/64 backdrop-blur">
+                    Carte conceptuelle Mapbox · clusters par quartier
+                  </div>
+                </div>
+              </div>
+              <div className="self-center">
+                <p className="text-sm font-bold uppercase tracking-wider text-clay">Hyperlocal</p>
+                <h2 className="serif mt-2 text-4xl leading-tight text-ink md:text-5xl">Vivre dans chaque quartier de Marrakech.</h2>
+                <div className="mt-8 space-y-3">
+                  {districts.map(([name, mood, count, price]) => (
+                    <div key={name} className="flex items-center justify-between gap-4 rounded-lg border border-black/8 bg-white p-4">
+                      <div>
+                        <div className="font-bold">{name}</div>
+                        <div className="text-sm text-ink/56">{mood}</div>
+                      </div>
+                      <div className="text-right text-xs font-semibold text-ink/55">
+                        <div>{count}</div>
+                        <div>{price}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      function GuidesAndLead() {
+        return (
+          <section id="guides" className="bg-night py-20 text-white">
+            <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[.95fr_1.05fr] lg:px-8">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wider text-saffron">Hub expert</p>
+                <h2 className="serif mt-2 text-4xl leading-tight md:text-5xl">Transformer la confiance en demandes qualifiees.</h2>
+                <p className="mt-5 max-w-xl text-white/66">
+                  Guides, FAQ et formulaires contextualises captent les acheteurs et vendeurs au bon moment, avec des signaux rassurants avant le premier contact.
+                </p>
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                  {["Acheter un riad en 2026", "Fiscalite & transfert des fonds", "Estimer mon bien", "Investissement locatif"].map((guide) => (
+                    <button key={guide} className="guide-action border border-white/14 bg-white/7 p-4 text-left text-sm font-semibold">
+                      <span className="relative z-10">{guide}</span>
+                      <span className="btn-icon-slot relative z-10"><Icon name="download" size={16} /></span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <form id="contact" className="rounded-lg bg-white p-5 text-ink shadow-soft">
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-extrabold">Demande de recherche</h3>
+                    <p className="mt-1 text-sm text-ink/56">Qualification rapide du lead.</p>
+                  </div>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-md bg-sand text-clay"><Icon name="send" /></span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {["Nom complet", "Email", "Telephone", "Budget"].map((label) => (
+                    <label key={label} className="block">
+                      <span className="mb-1 block text-xs font-bold uppercase text-ink/45">{label}</span>
+                      <input className="h-11 w-full rounded-md border border-black/10 px-3 outline-none focus:border-clay" placeholder={label} />
+                    </label>
+                  ))}
+                </div>
+                <label className="mt-3 block">
+                  <span className="mb-1 block text-xs font-bold uppercase text-ink/45">Projet</span>
+                  <textarea className="min-h-28 w-full rounded-md border border-black/10 p-3 outline-none focus:border-clay" placeholder="Je cherche un riad avec piscine, titre foncier, budget 500 000 EUR..." />
+                </label>
+                <div className="mt-4 flex items-start gap-3 rounded-md bg-sand p-3 text-xs leading-5 text-ink/62">
+                  <input type="checkbox" className="mt-1" />
+                  J'accepte d'etre contacte au sujet de ma recherche immobiliere.
+                </div>
+                <Button variant="signature" icon="send" className="mt-4 w-full">Envoyer ma demande</Button>
+              </form>
+            </div>
+          </section>
+        );
+      }
+
+      function PageHero({ kicker, title, text, stats = [], primary, secondary }) {
+        return (
+          <section className="hero relative min-h-[560px] overflow-hidden bg-night pt-28 text-white">
+            <MarrakechThreeScene compact className="absolute inset-y-0 right-0 w-full opacity-70 lg:left-[38%] lg:w-[62%]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-night via-night/82 to-night/18"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-pearl to-transparent"></div>
+            <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-16 sm:px-6 lg:px-8">
+              <div className="max-w-3xl">
+                <p className="text-sm font-bold uppercase tracking-wider text-saffron">{kicker}</p>
+                <h1 className="serif mt-3 text-5xl leading-[1.04] md:text-6xl">{title}</h1>
+                <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">{text}</p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  {primary && <Button href={primary.href} variant="signature" icon={primary.icon}>{primary.label}</Button>}
+                  {secondary && <Button href={secondary.href} variant="glass" icon={secondary.icon}>{secondary.label}</Button>}
+                </div>
+              </div>
+              {stats.length > 0 && (
+                <div className="mt-12 grid gap-3 sm:grid-cols-3 lg:max-w-3xl">
+                  {stats.map(([value, label]) => (
+                    <div key={label} className="motion-border rounded-lg border border-white/14 bg-white/9 p-4 backdrop-blur-xl">
+                      <div className="text-2xl font-extrabold">{value}</div>
+                      <div className="mt-1 text-xs font-bold uppercase text-white/52">{label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      }
+
+      function HomePage() {
+        return (
+          <>
+            <Hero />
+            <ImmersiveExperience />
+            <Listings />
+            <TrustSection />
+            <DistrictsMap />
+            <GuidesAndLead />
+          </>
+        );
+      }
+
+      function ListingPage({ mode }) {
+        const isRent = mode === "louer";
+        const listings = isRent ? rentalProperties : purchaseProperties;
+        const title = isRent ? "Locations meublees et longue duree a Marrakech." : "Acheter un bien verifie a Marrakech.";
+        const text = isRent
+          ? "Une selection orientee confort, flexibilite de bail, securite residence et visites rapides pour expatries, familles et digital nomads."
+          : "Riads, villas, appartements et terrains presentes avec les signaux qui comptent: statut juridique, quartier, budget multi-devise et potentiel de revente.";
+        const filters = isRent
+          ? ["Tous", "Villas", "Appartements", "Meuble", "Longue duree"]
+          : ["Tous", "Riads", "Villas", "Appartements", "Terrains"];
+        const info = isRent
+          ? [
+              ["Bail flexible", "Contrats longue duree, options meublees et conditions negociees."],
+              ["Installation rapide", "Selection selon ecoles, travail, mobilite et services."],
+              ["Visite express", "Creneaux rapides, video possible, dossier locataire simplifie."],
+            ]
+          : [
+              ["Verification documentaire", "Titre foncier, Moulkiya, superficie et statut vendeur."],
+              ["Vision investissement", "Rendement, saisonnalite, travaux et potentiel de revente."],
+              ["Accompagnement etranger", "Notaire, transfert de fonds, fiscalite et acquisition securisee."],
+            ];
+        return (
+          <>
+            <PageHero
+              kicker={isRent ? "Louer a Marrakech" : "Acheter a Marrakech"}
+              title={title}
+              text={text}
+              stats={isRent ? [["27", "biens disponibles"], ["72h", "visite organisee"], ["FR/EN", "support locataire"]] : [["86", "biens actifs"], ["42", "biens verifies"], ["3", "devises affichees"]]}
+              primary={{ label: isRent ? "Voir les locations" : "Voir les biens a vendre", href: "#/contact", icon: "search" }}
+              secondary={{ label: "Parler a un conseiller", href: "#/contact", icon: "message-circle" }}
+            />
+            <section className="bg-pearl py-20">
+              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="grid gap-8 lg:grid-cols-[.82fr_1.18fr]">
+                  <div className="space-y-5">
+                    <SearchPanel operation={isRent ? "Louer" : "Acheter"} />
+                    <div className="rounded-lg border border-black/8 bg-white p-5 shadow-lift">
+                      <p className="text-sm font-bold uppercase tracking-wider text-clay">Informations utiles</p>
+                      <div className="mt-5 space-y-4">
+                        {info.map(([name, desc]) => (
+                          <div key={name} className="border-l-2 border-saffron pl-4">
+                            <div className="font-bold text-ink">{name}</div>
+                            <p className="mt-1 text-sm leading-6 text-ink/58">{desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-6 flex gap-2 overflow-x-auto no-scrollbar">
+                      {filters.map((filter, index) => (
+                        <FilterPill key={filter} active={index === 0} icon="sliders-horizontal">{filter}</FilterPill>
+                      ))}
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {listings.map((item) => <PropertyCard key={item.title} item={item} />)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
+        );
+      }
+
+      function QuartiersPage() {
+        return (
+          <>
+            <PageHero
+              kicker="Quartiers de Marrakech"
+              title="Choisir un quartier, c'est choisir un style de vie."
+              text="Chaque zone a son rythme, son niveau de prix, son public naturel et son potentiel. Cette page aide l'acheteur a comprendre Marrakech avant de visiter."
+              stats={[["6", "secteurs analyses"], ["18K+", "MAD/m2 repere"], ["SEO", "pages hyperlocales"]]}
+              primary={{ label: "Explorer la carte", href: "#/quartiers", icon: "map" }}
+              secondary={{ label: "Demander conseil", href: "#/contact", icon: "message-circle" }}
+            />
+            <DistrictsMap />
+            <section className="bg-white py-20">
+              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                  {quartierDetails.map(([name, mood, audience, note]) => (
+                    <article key={name} className="lift-card rounded-lg border border-black/8 bg-pearl p-6">
+                      <p className="text-sm font-bold uppercase tracking-wider text-clay">{name}</p>
+                      <h3 className="mt-3 text-xl font-extrabold text-ink">{mood}</h3>
+                      <p className="mt-4 text-sm leading-6 text-ink/58">{audience}</p>
+                      <div className="mt-5 rounded-md bg-white p-4 text-sm font-semibold text-palm">{note}</div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </>
+        );
+      }
+
+      function GuidesPage() {
+        return (
+          <>
+            <PageHero
+              kicker="Ressources & guides"
+              title="Le hub expert pour acheter, vendre et investir."
+              text="Des contenus utiles pour rassurer les clients avant le premier contact: juridique, fiscalite, quartiers, rendement, vente et acquisition a distance."
+              stats={[["6", "guides prioritaires"], ["FR/EN/AR", "contenu SEO"], ["PDF", "lead magnets"]]}
+              primary={{ label: "Telecharger un guide", href: "#/contact", icon: "download" }}
+              secondary={{ label: "Poser une question", href: "#/contact", icon: "message-circle" }}
+            />
+            <section className="bg-pearl py-20">
+              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                  {guideCards.map(([title, desc, time, icon]) => (
+                    <article key={title} className="motion-border lift-card rounded-lg border border-black/8 bg-white p-6">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-md bg-palm text-white"><Icon name={icon} /></span>
+                      <h3 className="mt-5 text-xl font-extrabold text-ink">{title}</h3>
+                      <p className="mt-3 text-sm leading-6 text-ink/58">{desc}</p>
+                      <div className="mt-6 flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase text-ink/42">{time} lecture</span>
+                        <Button variant="ghost" compact icon="arrow-up-right">Lire</Button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+            <section className="bg-white py-20">
+              <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wider text-clay">FAQ acheteur</p>
+                  <h2 className="serif mt-2 text-4xl text-ink">Questions qui convertissent.</h2>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    ["Un etranger peut-il acheter un riad ?", "Oui, avec verification du statut du bien et accompagnement notarial."],
+                    ["Quels documents verifier avant l'offre ?", "Titre, identite vendeur, superficie, charges, autorisations et servitudes."],
+                    ["Comment evaluer le rendement locatif ?", "Par quartier, saisonnalite, taux d'occupation et budget travaux/gestion."],
+                  ].map(([q, a]) => (
+                    <div key={q} className="rounded-lg border border-black/8 bg-pearl p-5">
+                      <h3 className="font-extrabold text-ink">{q}</h3>
+                      <p className="mt-2 text-sm leading-6 text-ink/58">{a}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </>
+        );
+      }
+
+      function AgencyPage() {
+        return (
+          <>
+            <PageHero
+              kicker="L'agence"
+              title="Une equipe locale pour une clientele internationale."
+              text="La page agence raconte la confiance: expertise terrain, verification juridique, photos premium, suivi a distance et relation claire avec les vendeurs."
+              stats={[["12 ans", "experience locale"], ["50+", "avis Google objectif"], ["3 langues", "FR EN AR"]]}
+              primary={{ label: "Rencontrer l'equipe", href: "#/contact", icon: "users" }}
+              secondary={{ label: "Confier un mandat", href: "#/contact", icon: "file-signature" }}
+            />
+            <section className="bg-white py-20">
+              <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[.86fr_1.14fr] lg:px-8">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wider text-palm">Positionnement</p>
+                  <h2 className="serif mt-2 text-4xl leading-tight text-ink">Agence de confiance pour biens verifies.</h2>
+                  <p className="mt-5 leading-7 text-ink/62">
+                    Le discours de marque doit eviter la promesse vague. Ici, chaque message est lie a une preuve: documents, prix, quartier, photos, suivi et accompagnement notarial.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {processSteps.map(([step, title, desc]) => (
+                    <div key={step} className="rounded-lg border border-black/8 bg-pearl p-5">
+                      <span className="text-sm font-extrabold text-clay">{step}</span>
+                      <h3 className="mt-3 text-lg font-extrabold text-ink">{title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-ink/58">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+            <section className="bg-sand py-20">
+              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="mb-10">
+                  <p className="text-sm font-bold uppercase tracking-wider text-clay">Equipe</p>
+                  <h2 className="serif mt-2 text-4xl text-ink">Interlocuteurs clairs.</h2>
+                </div>
+                <div className="grid gap-5 md:grid-cols-3">
+                  {teamMembers.map(([name, role, desc]) => (
+                    <article key={name} className="lift-card rounded-lg border border-black/8 bg-white p-6">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-md bg-palm text-lg font-extrabold text-white">{name.split(" ").map((part) => part[0]).join("")}</div>
+                      <h3 className="mt-5 text-xl font-extrabold text-ink">{name}</h3>
+                      <p className="mt-1 text-sm font-bold text-clay">{role}</p>
+                      <p className="mt-4 text-sm leading-6 text-ink/58">{desc}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </>
+        );
+      }
+
+      function ContactPage() {
+        return (
+          <>
+            <PageHero
+              kicker="Contact & qualification"
+              title="Un formulaire pense pour transformer l'intention en lead qualifie."
+              text="La page contact doit aider l'agence a comprendre le projet avant le premier appel: budget, devise, usage, timing, quartier et niveau de maturite."
+              stats={[["24h", "delai de reponse"], ["Video", "visite a distance"], ["CRM", "lead suivi"]]}
+              primary={{ label: "Remplir ma demande", href: "#/contact", icon: "send" }}
+              secondary={{ label: "Planifier un RDV", href: "#/contact", icon: "calendar-check" }}
+            />
+            <section id="contact-form" className="bg-pearl py-20">
+              <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
+                <div className="space-y-5">
+                  {[
+                    ["Adresse", "Marrakech, Gueliz - accueil sur rendez-vous."],
+                    ["Client international", "Visite video, selection PDF et suivi documents."],
+                    ["Vendeur / bailleur", "Estimation, photos, mandat et diffusion internationale."],
+                  ].map(([title, desc]) => (
+                    <div key={title} className="rounded-lg border border-black/8 bg-white p-5 shadow-lift">
+                      <h3 className="font-extrabold text-ink">{title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-ink/58">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+                <form className="rounded-lg bg-white p-6 text-ink shadow-soft">
+                  <div className="mb-6 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-extrabold">Votre projet</h2>
+                      <p className="mt-1 text-sm text-ink/56">Les champs structurent le lead pour l'equipe commerciale.</p>
+                    </div>
+                    <span className="flex h-12 w-12 items-center justify-center rounded-md bg-sand text-clay"><Icon name="send" /></span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {["Nom complet", "Email", "Telephone", "Budget"].map((label) => (
+                      <label key={label} className="block">
+                        <span className="mb-1 block text-xs font-bold uppercase text-ink/45">{label}</span>
+                        <input className="h-12 w-full rounded-md border border-black/10 px-3 outline-none focus:border-clay" placeholder={label} />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                    {["Acheter", "Louer", "Vendre"].map((label, index) => (
+                      <FilterPill key={label} active={index === 0}>{label}</FilterPill>
+                    ))}
+                  </div>
+                  <label className="mt-4 block">
+                    <span className="mb-1 block text-xs font-bold uppercase text-ink/45">Message</span>
+                    <textarea className="min-h-32 w-full rounded-md border border-black/10 p-3 outline-none focus:border-clay" placeholder="Quartier, type de bien, calendrier, devise, contraintes..." />
+                  </label>
+                  <Button variant="signature" icon="send" className="mt-5 w-full">Envoyer la demande</Button>
+                </form>
+              </div>
+            </section>
+          </>
+        );
+      }
+
+      function FloatingDock() {
+        const actions = [
+          ["search", "Rechercher", "#/acheter", true],
+          ["calendar-check", "Prendre RDV", "#/contact", false],
+          ["message-circle", "Parler a un agent", "#/contact", false],
+          ["map-pin", "Voir quartiers", "#/quartiers", false],
+        ];
+        return (
+          <div className="floating-dock" aria-label="Actions rapides">
+            {actions.map(([icon, label, href, primary]) => (
+              <a key={label} href={href} className={`icon-action dock-button ${primary ? "primary" : ""}`} aria-label={label}>
+                <Icon name={icon} size={18} />
+                <span className="dock-tip">{label}</span>
+              </a>
+            ))}
+          </div>
+        );
+      }
+
+      function CurrentPage({ route }) {
+        if (route === "acheter") return <ListingPage mode="acheter" />;
+        if (route === "louer") return <ListingPage mode="louer" />;
+        if (route === "quartiers") return <QuartiersPage />;
+        if (route === "guides") return <GuidesPage />;
+        if (route === "agence") return <AgencyPage />;
+        if (route === "contact") return <ContactPage />;
+        return <HomePage />;
+      }
+
+      function App() {
+        const route = useHashRoute();
+        useEffect(() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, [route]);
+        return (
+          <>
+            <Nav route={route} />
+            <main>
+              <CurrentPage route={route} />
+            </main>
+            <FloatingDock />
+            <footer className="bg-pearl pb-28 pt-8">
+              <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 px-4 text-sm text-ink/55 sm:flex-row sm:px-6 lg:px-8">
+                <span>Atlas Keys Marrakech · Prototype frontend</span>
+                <span>SEO · Multilingue · Leads · Immobilier premium</span>
+              </div>
+            </footer>
+          </>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
